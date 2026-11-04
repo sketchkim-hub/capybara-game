@@ -99,4 +99,4 @@ R.setAnimationLoop(()=>{t+=.016;at+=.016;const b=Math.sin(t*2)*.02;body.position
  fx.children.slice().forEach(m=>{m.position.add(m.userData.v);if(--m.userData.life<0)fx.remove(m)});
  R.render(scene,cam)});
 ui();
-window.__capy={S,act};
+window.__capy={S,act,ui,toast};
