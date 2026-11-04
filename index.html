@@ -1,0 +1,33 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>카피바라 키우기</title><style>
+*{box-sizing:border-box;margin:0;font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+html,body{height:100%;overflow:hidden;background:#fdf3e3}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block}
+#top{position:fixed;top:0;left:0;right:0;padding:calc(env(safe-area-inset-top) + 10px) 12px 8px;background:linear-gradient(#fffaf2ee,#fffaf200)}
+#name{font-weight:800;font-size:18px;color:#6b4423}#stage{font-size:12px;background:#ffb74d;color:#fff;border-radius:10px;padding:2px 8px;margin-left:6px}
+#coin{float:right;font-weight:700;color:#b8860b}
+.bars{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;margin-top:8px;font-size:11px;color:#6b4423}
+.bar{height:7px;background:#eadbc8;border-radius:4px;overflow:hidden}.bar i{display:block;height:100%;background:#8bc34a;transition:.4s}
+#exp{margin-top:6px;font-size:11px;color:#8d6e63}
+#acts{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px 10px calc(env(safe-area-inset-bottom) + 12px);background:#fffaf2ee;border-radius:20px 20px 0 0;box-shadow:0 -4px 16px #0001}
+#acts button{border:0;background:#fff3e0;border-radius:14px;padding:8px 0;font-size:12px;color:#6b4423;font-weight:700}
+#acts button b{display:block;font-size:24px}
+#acts button:active{transform:scale(.94)}
+#toast{position:fixed;top:38%;left:50%;transform:translateX(-50%);background:#6b4423e0;color:#fff;padding:10px 16px;border-radius:16px;font-size:14px;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap}
+.modal{position:fixed;inset:0;background:#0006;display:none;align-items:center;justify-content:center}
+.modal.on{display:flex}.box{background:#fffaf2;border-radius:20px;padding:20px;width:86%;max-width:360px;text-align:center;color:#6b4423}
+.box h2{margin-bottom:10px}.box input{width:100%;padding:12px;border-radius:12px;border:2px solid #ffcc80;font-size:16px;margin:10px 0}
+.box .btn{border:0;background:#ff9800;color:#fff;font-weight:800;padding:12px;border-radius:12px;width:100%;font-size:15px;margin-top:6px}
+.shop{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.shop button{border:2px solid #ffe0b2;background:#fff;border-radius:12px;padding:10px 4px;font-size:13px;color:#6b4423}
+.shop button.own{background:#dcedc8;border-color:#aed581}
+</style></head><body>
+<canvas id="c"></canvas>
+<div id="top"><span id="name">카피바라</span><span id="stage">아기</span><span id="coin">🪙 0</span>
+<div class="bars" id="bars"></div><div id="exp"></div></div>
+<div id="toast"></div>
+<div id="acts">
+<button data-a="feed"><b>🍉</b>먹이</button><button data-a="walk"><b>🌳</b>산책</button><button data-a="exercise"><b>🏃</b>운동</button><button data-a="play"><b>🧶</b>놀이</button>
+<button data-a="study"><b>📚</b>공부</button><button data-a="trick"><b>🎵</b>재롱</button><button data-a="decor"><b>🏠</b>집꾸미기</button><button data-a="sleep"><b>💤</b>잠자기</button></div>
+<div class="modal" id="nameM"><div class="box"><h2>🦫 아기 카피바라가 태어났어요!</h2><p>이름을 지어 주세요</p><input id="nameI" maxlength="8" placeholder="예: 바라, 유자, 뭉치"><button class="btn" id="nameB">이름 정하기</button></div></div>
+<div class="modal" id="decorM"><div class="box"><h2>🏠 집 꾸미기</h2><p>코인으로 가구를 사서 집을 꾸며요</p><div class="shop" id="shop"></div><button class="btn" id="decorX">닫기</button></div></div>
+<script type="module" src="game.js"></script></body></html>
