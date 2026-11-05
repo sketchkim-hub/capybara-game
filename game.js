@@ -67,12 +67,15 @@ const TRICKS=['빙글빙글 돌기','점프 재롱','고개 갸웃','유자 올�
 function act(a){if(a==='decor'){openShop();return}
  const A=ACT[a];if(S.energy<A.need){toast('너무 피곤해요… 잠을 재워 주세요 💤');return}
  if(a!=='feed'&&a!=='sleep'&&S.hunger<10){toast('배고파요! 먹이를 주세요 🍉');return}
- for(const k in A.d)S[k]=cl(S[k]+A.d[k]);
- const before=stage();S.exp+=A.x;S.coin+=A.c;
- let msg=A.m;if(a==='trick'){const lv=Math.min(TRICKS.length,1+Math.floor(S.smart/25));msg=`재롱: ${TRICKS[Math.floor(Math.random()*lv)]}! 🎵 (+${A.c}코인)`}
- anim=a;at=0;park.visible=a==='walk';wall.visible=a!=='walk';spawn(A.fx);toast(msg);
+ if(window.__startAction){window.__startAction(a);return}
+ finishAction(a,1)}
+function finishAction(a,quality){quality=Math.max(0,Math.min(1,quality));const A=ACT[a],mul=.4+.6*quality;
+ for(const k in A.d){let v=A.d[k];if(v>0)v=Math.round(v*mul);S[k]=cl(S[k]+v)}
+ const before=stage();const xp=Math.max(1,Math.round(A.x*mul)),coin=Math.round(A.c*mul);S.exp+=xp;S.coin+=coin;
+ let msg=A.m;if(a==='trick'){const lv=Math.min(TRICKS.length,1+Math.floor(S.smart/25));msg=`재롱: ${TRICKS[Math.floor(Math.random()*lv)]}! 🎵`}
+ anim=a;at=0;park.visible=a==='walk';wall.visible=a!=='walk';spawn(A.fx);toast(msg+(quality<.5?' (아쉬워요)':quality>.85?' (완벽!)':''));
  if(stage()!==before)setTimeout(()=>{toast(`🎉 ${S.name}(이)가 ${stage().n} 카피바라로 성장했어요!`);spawn(0xffeb3b,20)},1800);
- ui()}
+ ui();return{msg,xp,coin,quality}}
 document.querySelectorAll('#acts button').forEach(b=>b.onclick=()=>act(b.dataset.a));
 function openShop(){$('shop').innerHTML=ITEMS.map(i=>`<button data-i="${i.id}" class="${S.own.includes(i.id)?'own':''}">${i.n}<br>${S.own.includes(i.id)?'배치됨 ✓':'🪙 '+i.p}</button>`).join('');
  $('shop').querySelectorAll('button').forEach(b=>b.onclick=()=>{const it=ITEMS.find(x=>x.id==b.dataset.i);if(S.own.includes(it.id)){S.own=S.own.filter(x=>x!=it.id)}else if(S.coin>=it.p){S.coin-=it.p;S.own.push(it.id);S.happy=cl(S.happy+10);toast(it.n+' 배치 완료!')}else toast('코인이 부족해요 🪙');ui();openShop()});
@@ -99,4 +102,4 @@ R.setAnimationLoop(()=>{t+=.016;at+=.016;const b=Math.sin(t*2)*.02;body.position
  fx.children.slice().forEach(m=>{m.position.add(m.userData.v);if(--m.userData.life<0)fx.remove(m)});
  R.render(scene,cam)});
 ui();
-window.__capy={S,act,ui,toast};
+window.__capy={S,act,ui,toast,finishAction,ACT};
