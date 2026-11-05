@@ -1,4 +1,4 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta http-equiv="Cache-Control" content="no-cache"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>카피바라 키우기</title><style>
 *{box-sizing:border-box;margin:0;font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
 html,body{height:100%;overflow:hidden;background:#fdf3e3}
@@ -14,7 +14,7 @@ html,body{height:100%;overflow:hidden;background:#fdf3e3}
 #acts button b{display:block;font-size:24px}
 #acts button:active{transform:scale(.94)}
 #toast{position:fixed;top:38%;left:50%;transform:translateX(-50%);background:#6b4423e0;color:#fff;padding:10px 16px;border-radius:16px;font-size:14px;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap}
-.modal{position:fixed;inset:0;z-index:10;background:#0006;display:none;align-items:center;justify-content:center}
+.modal{position:fixed;inset:0;z-index:30;background:#0006;display:none;align-items:center;justify-content:center}
 .modal.on{display:flex}.box{background:#fffaf2;border-radius:20px;padding:20px;width:86%;max-width:360px;text-align:center;color:#6b4423}
 .box h2{margin-bottom:10px}.box input{width:100%;padding:12px;border-radius:12px;border:2px solid #ffcc80;font-size:16px;margin:10px 0}
 .box .btn{border:0;background:#ff9800;color:#fff;font-weight:800;padding:12px;border-radius:12px;width:100%;font-size:15px;margin-top:6px}
@@ -29,8 +29,8 @@ html,body{height:100%;overflow:hidden;background:#fdf3e3}
 #mgTop{position:absolute;top:0;left:0;right:0;padding:calc(env(safe-area-inset-top) + 10px) 12px;display:flex;justify-content:space-between;align-items:center;color:#6b4423;font-weight:800}
 #mgBack{border:0;background:#fff;border-radius:12px;padding:8px 12px;font-weight:800;color:#6b4423;box-shadow:0 2px 6px #0002}
 #mgEnd{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#0005}#mgEnd.on{display:flex}
-#diffM .diff{display:grid;gap:8px;margin:12px 0}
-#diffM .diff button{border:2px solid #ffe0b2;background:#fff;border-radius:14px;padding:12px;font-size:15px;font-weight:800;color:#6b4423;text-align:left}
+#diffM{z-index:50!important}#diffM .diff{display:grid;gap:8px;margin:12px 0}
+#diffM .diff button{border:2px solid #ffe0b2;background:#fff;border-radius:14px;padding:14px 12px;min-height:56px;font-size:15px;font-weight:800;color:#6b4423;text-align:left;width:100%;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 #diffM .diff button small{display:block;font-weight:500;color:#a1887f;font-size:12px;margin-top:2px}
 #diffM .diff button.sel{border-color:#ff9800;background:#fff3e0;box-shadow:0 0 0 2px #ffcc80}
 </style></head><body>
@@ -52,7 +52,7 @@ html,body{height:100%;overflow:hidden;background:#fdf3e3}
 </div>
 <button class="btn" id="diffGo">시작!</button>
 <button class="btn" id="diffX" style="background:#8d6e63;margin-top:8px">취소</button></div></div>
-<script type="module" src="game.js"></script><button id="gameBtn" aria-label="미니게임">🎮<span>미니게임</span></button>
+<script type="module" src="game.js?v=20261105d"></script><button id="gameBtn" aria-label="미니게임">🎮<span>미니게임</span></button>
 <div class="modal" id="menuM"><div class="box"><h2>🎮 미니게임</h2><p style="font-size:13px">한 판에 체력 5 · 점수만큼 코인·경험치·행복!</p>
 <button class="gm" data-g="jump">🦘 장애물 뛰어넘기<small>화면을 탭해서 점프! 돌멩이를 넘어요 · 최고 <b id="b_jump">0</b></small></button>
 <button class="gm" data-g="dodge">☔ 장애물 피하기<small>좌우로 터치해서 떨어지는 돌을 피해요 · 최고 <b id="b_dodge">0</b></small></button>
@@ -60,4 +60,4 @@ html,body{height:100%;overflow:hidden;background:#fdf3e3}
 <button class="btn" id="menuX">닫기</button></div></div>
 <div id="mg"><canvas id="mgc"></canvas><div id="mgTop"><button id="mgBack">← 홈으로</button><span id="mgTitle"></span><span id="mgScore">0점</span></div>
 <div id="mgEnd"><div class="box"><h2 id="endT">게임 끝!</h2><p id="endP"></p><button class="btn" id="again">다시 하기</button><button class="btn" id="endHome" style="background:#8d6e63">홈으로</button></div></div></div>
-<script type="module" src="games.js"></script></body></html>
+<script type="module" src="games.js?v=20261105d"></script></body></html>

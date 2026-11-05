@@ -3,10 +3,10 @@ const C=$('mgc'),X=C.getContext('2d');let W,H,dpr;
 const NAMES={jump:'장애물 뛰어넘기',dodge:'장애물 피하기',catch:'유자 받기'};
 const ANAME={feed:'🍉 먹이 주기',walk:'🌳 산책하기',exercise:'🏃 운동하기',play:'🧶 공놀이',study:'📚 공부하기',trick:'🎵 재롱 연습',sleep:'💤 재우기'};
 const DIFF={
- easy:{id:'easy',n:'쉬움',speed:3.0,gap:52,win:28,notes:8,reward:0.85,label:'🌱 쉬움'},
+ easy:{id:'easy',n:'쉬움',speed:2.4,gap:58,win:32,notes:8,reward:0.85,label:'🌱 쉬움'},
  normal:{id:'normal',n:'보통',speed:4.2,gap:38,win:20,notes:10,reward:1.0,label:'⭐ 보통'},
- hard:{id:'hard',n:'어려움',speed:5.6,gap:28,win:14,notes:12,reward:1.25,label:'🔥 어려움'},
- veryhard:{id:'veryhard',n:'매우어려움',speed:7.2,gap:20,win:10,notes:14,reward:1.5,label:'💀 매우어려움'}
+ hard:{id:'hard',n:'어려움',speed:6.4,gap:26,win:13,notes:12,reward:1.25,label:'🔥 어려움'},
+ veryhard:{id:'veryhard',n:'매우어려움',speed:9.0,gap:18,win:9,notes:16,reward:1.5,label:'💀 매우어려움'}
 };
 let pickedDiff='normal';
 
@@ -50,11 +50,18 @@ function beginAction(a,diffId){mode='action';openMG(ANAME[a]+(a==='exercise'&&di
  G=base;cancelAnimationFrame(raf);loop()}
 window.__startAction=function(a){if(a==='exercise'){pickedDiff='normal';
   document.querySelectorAll('#diffList button').forEach(b=>b.classList.toggle('sel',b.dataset.d==='normal'));
-  $('diffM').classList.add('on');return}
+  const dm=$('diffM');dm.style.zIndex='50';dm.classList.add('on');return}
  beginAction(a)};
-$('diffGo').onclick=()=>{$('diffM').classList.remove('on');beginAction('exercise',pickedDiff)};
+function pickDiff(d){pickedDiff=d;document.querySelectorAll('#diffList button').forEach(x=>x.classList.toggle('sel',x.dataset.d===d))}
+function startExercise(){const S=window.__capy.S,A=window.__capy.ACT.exercise;
+  if(S.energy<A.need){window.__capy.toast('너무 피곤해요… 잠을 재워 주세요 💤');return}
+  if(S.hunger<10){window.__capy.toast('배고파요! 먹이를 주세요 🍉');return}
+  $('diffM').classList.remove('on');beginAction('exercise',pickedDiff)}
+$('diffGo').onclick=startExercise;
 $('diffX').onclick=()=>$('diffM').classList.remove('on');
-document.querySelectorAll('#diffList button').forEach(b=>b.onclick=()=>{pickedDiff=b.dataset.d;document.querySelectorAll('#diffList button').forEach(x=>x.classList.toggle('sel',x===b))});
+document.querySelectorAll('#diffList button').forEach(b=>{b.onclick=e=>{e.preventDefault();e.stopPropagation();pickDiff(b.dataset.d)};
+ b.ontouchend=e=>{e.preventDefault();pickDiff(b.dataset.d)}});
+$('diffM').addEventListener('click',e=>{if(e.target===e.currentTarget)$('diffM').classList.remove('on')});
 const ptr={down:false,x:0,y:0,sx:0,sy:0};
 function onDown(e){if(!G||G.over)return;const t=e.touches?e.touches[0]:e;ptr.down=true;ptr.x=t.clientX;ptr.y=t.clientY;ptr.sx=t.clientX;ptr.sy=t.clientY;ptr.t0=performance.now();
  if(mode==='action'&&G.k==='walk'){if(inJumpBtn(t.clientX,t.clientY)){ptr.jumpBtn=true;doWalkJump(true)}else{G.tx=Math.max(40,Math.min(W-40,t.clientX));ptr.jumpBtn=false}}
@@ -169,7 +176,7 @@ function actEx(g){X.fillStyle='#ffe0b2';X.fillRect(0,0,W,H);X.fillStyle='#ffcc80
   if(!g.over&&!c.hit&&!c.missed&&g.t>c.t+win){c.missed=true;g.miss++}});
  capy(W/2,H*.82,.95);X.fillStyle='#6b4423';X.font='bold 16px sans-serif';X.textAlign='center';X.textBaseline='alphabetic';
  const dn=g.diff&&DIFF[g.diff]?DIFF[g.diff].n:'보통';
- X.fillText(`원 4개 · 난이도 ${dn}`,W/2,H*.15);
+ X.fillStyle='#6b4423';X.font='bold 18px sans-serif';X.fillText(`원 4개 · ${dn}`,W/2,H*.14);X.font='bold 14px sans-serif';X.fillText(`속도 ${g.speed} · 판정 ±${g.win}`,W/2,H*.185);
  X.fillText(`성공 ${g.hits}/${g.cues.length} · 놓침 ${g.miss}`,W/2,H*.21);
  if(g.t<100)X.fillText('노트와 같은 색 원을 타이밍에 탭!',W/2,H*.27);
  const done=g.cues.every(c=>c.hit||c.missed);
