@@ -32,7 +32,7 @@ function startHub(k){const s=window.__capy.S;if(s.energy<5){window.__capy.toast(
 window.__startAction=function(a){mode='action';openMG(ANAME[a]);
  const base={k:a,score:0,t:0,over:false,done:false,hits:0,miss:0,need:8,px:W/2,tx:W/2,y:0,vy:0,obs:[],items:[],seq:[],player:[],show:true,phase:'show',beat:0,hold:0,cards:[],flipped:[],matched:0,blanket:0,ball:null,cues:[],cueI:0};
  if(a==='feed'){base.need=8;base.px=W/2}
- if(a==='walk'){base.need=6;base.px=80;base.dist=0}
+ if(a==='walk'){base.need=6;base.px=W*0.28;base.tx=base.px;base.dist=0;base.jy=0;base.jvy=0;base.coyote=8;base.jumpBuf=0;base.jumped=0}
  if(a==='exercise'){base.need=8;base.cues=[];for(let i=0;i<8;i++)base.cues.push({t:60+i*40+(i>4?10:0),hit:false,missed:false})}
  if(a==='play'){base.ball={x:W/2,y:H*.35,vy:0};base.need=10;base.bounces=0}
  if(a==='study'){const pairs=['🍉','🍊','🥕','🌿'];const deck=[...pairs,...pairs].sort(()=>Math.random()-.5);base.cards=deck.map((e,i)=>({e,i,open:false,gone:false}));base.need=4;base.flipped=[];base.limit=12*60}
@@ -40,17 +40,22 @@ window.__startAction=function(a){mode='action';openMG(ANAME[a]);
  if(a==='sleep'){base.blanket=.12;base.need=1}
  G=base;cancelAnimationFrame(raf);loop()};
 const ptr={down:false,x:0,y:0,sx:0,sy:0};
-function onDown(e){if(!G||G.over)return;const t=e.touches?e.touches[0]:e;ptr.down=true;ptr.x=t.clientX;ptr.y=t.clientY;ptr.sx=t.clientX;ptr.sy=t.clientY;handleTap(t.clientX,t.clientY);e.preventDefault()}
+function onDown(e){if(!G||G.over)return;const t=e.touches?e.touches[0]:e;ptr.down=true;ptr.x=t.clientX;ptr.y=t.clientY;ptr.sx=t.clientX;ptr.sy=t.clientY;ptr.t0=performance.now();
+ if(mode==='action'&&G.k==='walk'){if(inJumpBtn(t.clientX,t.clientY)){doWalkJump();ptr.jumpBtn=true}else{G.tx=Math.max(40,Math.min(W-40,t.clientX));ptr.jumpBtn=false}}
+ else handleTap(t.clientX,t.clientY);e.preventDefault()}
 function onMove(e){if(!G||G.over||!ptr.down)return;const t=e.touches?e.touches[0]:e;ptr.x=t.clientX;ptr.y=t.clientY;
  if(mode==='action'){if(G.k==='walk'||G.k==='feed')G.tx=Math.max(40,Math.min(W-40,t.clientX));
   if(G.k==='sleep'){const dy=t.clientY-ptr.sy;if(dy>0)G.blanket=Math.min(1,G.blanket+dy/220);ptr.sy=t.clientY}
   if(G.k==='play'&&G.ball){/* drag not needed */}}
  e.preventDefault()}
-function onUp(e){ptr.down=false}
+function onUp(e){if(G&&!G.over&&mode==='action'&&G.k==='walk'&&!ptr.jumpBtn){const dt=performance.now()-(ptr.t0||0);const dx=Math.abs(ptr.x-ptr.sx),dy=Math.abs(ptr.y-ptr.sy);if(dt<220&&dx<18&&dy<18)doWalkJump()}
+ ptr.down=false;ptr.jumpBtn=false}
+function inJumpBtn(x,y){const bx=W-78,by=H-110,bw=64,bh=64;return x>=bx&&x<=bx+bw&&y>=by&&y<=by+bh}
+function doWalkJump(){if(!G||G.k!=='walk'||G.over)return;G.jumpBuf=10;tryWalkJump()}
+function tryWalkJump(){if(!G||G.k!=='walk')return;if((G.jy<=0&&G.coyote>0)||G.jy<=0){if(G.jumpBuf>0){G.jvy=13.5;G.jy=Math.max(G.jy,0.1);G.coyote=0;G.jumpBuf=0;G.jumped++}}}
 C.addEventListener('pointerdown',onDown);C.addEventListener('pointermove',onMove);C.addEventListener('pointerup',onUp);C.addEventListener('pointercancel',onUp);
 function handleTap(x,y){if(mode==='hub'){if(G.k==='jump'){if(G.y===0)G.vy=13}else G.tx=x<W/2?Math.max(40,G.px-90):Math.min(W-40,G.px+90);return}
  if(G.k==='feed')G.tx=x;
- if(G.k==='walk'){G.tx=x;G.holding=true}
  if(G.k==='exercise'){const cue=G.cues.find(c=>!c.hit&&!c.missed&&Math.abs(G.t-c.t)<18);if(cue){cue.hit=true;G.hits++;G.score+=10}else G.miss++}
  if(G.k==='play'&&G.ball){if(Math.abs(x-G.ball.x)<60&&Math.abs(y-G.ball.y)<80&&G.ball.vy>0){G.ball.vy=-11-Math.random()*2;G.bounces++;G.hits++;G.score+=10}}
  if(G.k==='study'){const cols=4,gap=12,cw=(W-40-gap*3)/4,ch=cw,ox=20,oy=H*.28;const i=Math.floor((x-ox)/(cw+gap)),j=Math.floor((y-oy)/(ch+gap));const idx=j*cols+i;
@@ -95,15 +100,39 @@ function actFeed(g){X.fillStyle='#fff3e0';X.fillRect(0,0,W,H);X.fillStyle='#ffe0
  if(g.t<90)X.fillText('좌우로 움직여 입을 맞추세요!',W/2,H*.28);
  if(!g.over&&(g.hits>=g.need||g.t>16*60||g.miss>=5))finishAction(Math.max(0,g.hits/g.need)*(1-Math.min(.5,g.miss*.08)))}
 function actWalk(g){X.fillStyle='#b3e5fc';X.fillRect(0,0,W,H);X.fillStyle='#81c784';X.fillRect(0,H*.65,W,H);
- const ground=H*.65;if(!g.over){if(ptr.down){g.dist+=4;g.score+=.15;g.holding=true}else g.holding=false;
-  g.px+=(g.tx-g.px)*.15;if(g.t%45===0)g.obs.push({x:W+20,y:ground-8,type:Math.random()<.45?'rock':'puddle',w:20+Math.random()*16});
-  if(g.t%55===0)g.items.push({x:W+10,y:ground-40-Math.random()*40});g.obs.forEach(o=>o.x-=ptr.down?5:1.5);g.items.forEach(it=>it.x-=ptr.down?5:1.5)}
- g.obs=g.obs.filter(o=>{if(o.type==='puddle')puddle(o.x,o.y,o.w);else rock(o.x,o.y,16);
-  if(!g.over&&Math.abs(o.x-g.px)<(o.type==='puddle'?o.w:22)&&Math.abs((ground-20)-o.y)<30){g.miss++;o.x=-99}return o.x>-40});
- g.items=g.items.filter(it=>{flower(it.x,it.y);if(!g.over&&hit(it.x,it.y,g.px,ground-28,36)){g.hits++;g.score+=12;return false}return it.x>-20});
- capy(g.px,ground-28+(ptr.down?Math.sin(g.t*.4)*3:0),1);X.fillStyle='#6b4423';X.font='bold 16px sans-serif';X.textAlign='center';
- X.fillText(`꽃 ${g.hits}/${g.need} · 부딪힘 ${g.miss}`,W/2,H*.16);if(g.t<100)X.fillText('화면을 누르고 있으면 걸어요! 좌우로 피하세요',W/2,H*.26);
- if(!g.over&&(g.hits>=g.need||g.dist>2200||g.t>18*60))finishAction(Math.max(.2,Math.min(1,(g.hits/g.need)*.85+(g.dist/2500)*.15)*(1-Math.min(.4,g.miss*.1))))}
+ const ground=H*.65, bodyY=()=>ground-28-g.jy;
+ if(!g.over){
+  // auto-run forward; left/right follow target
+  g.dist+=4.2;g.score+=.12;g.px+=(g.tx-g.px)*.22;
+  // jump physics + coyote / buffer
+  if(g.jy<=0){g.jy=0;g.jvy=0;g.coyote=Math.min(8,g.coyote+1)}else{g.coyote=0;g.jvy-=.72;g.jy+=g.jvy;if(g.jy<=0){g.jy=0;g.jvy=0;g.coyote=8}}
+  if(g.jumpBuf>0){g.jumpBuf--;tryWalkJump()}
+  // spawn: rocks need jump, puddles also jumpable; flowers
+  if(g.t%48===0)g.obs.push({x:W+30,y:ground-10,type:Math.random()<.55?'rock':'puddle',w:18+Math.random()*14,h:g.t});
+  if(g.t%52===0)g.items.push({x:W+16,y:ground-36-Math.random()*50,got:false});
+  const sp=5.2;g.obs.forEach(o=>o.x-=sp);g.items.forEach(it=>it.x-=sp);
+ }
+ // draw + collide
+ g.obs=g.obs.filter(o=>{
+  if(o.type==='puddle')puddle(o.x,ground-4,o.w);else rock(o.x,ground-14,17);
+  const half=o.type==='puddle'?o.w+4:20;
+  const near=Math.abs(o.x-g.px)<half;
+  // only hit if not high enough in air (need jump over ~28px)
+  const cleared=g.jy>22;
+  if(!g.over&&near&&!cleared&&!o.hit){o.hit=true;g.miss++;g.score=Math.max(0,g.score-3)}
+  return o.x>-50});
+ g.items=g.items.filter(it=>{flower(it.x,it.y);
+  if(!g.over&&hit(it.x,it.y,g.px,bodyY(),40)){g.hits++;g.score+=12;return false}
+  return it.x>-30});
+ // capybara
+ const bob=g.jy>0?0:Math.sin(g.t*.45)*2;
+ capy(g.px,bodyY()+bob,1,g.tx<g.px-2?-1:1);
+ // jump button
+ const bx=W-78,by=H-110;X.fillStyle=g.jy>0?'#ffb74daa':'#ff9800';roundRect(bx,by,64,64,18);X.fillStyle='#fff';X.font='bold 13px sans-serif';X.textAlign='center';X.textBaseline='middle';X.fillText('점프',bx+32,by+32);X.font='20px serif';X.fillText('⬆',bx+32,by+14);
+ X.fillStyle='#6b4423';X.font='bold 16px sans-serif';X.textBaseline='alphabetic';
+ X.fillText(`꽃 ${g.hits}/${g.need} · 부딪힘 ${g.miss}`,W/2,H*.15);
+ if(g.t<140){X.fillText('좌우로 이동 · 점프(버튼/탭)로 돌 넘기!',W/2,H*.25)}
+ if(!g.over&&(g.hits>=g.need||g.dist>2400||g.t>18*60))finishAction(Math.max(.2,Math.min(1,(g.hits/g.need)*.85+(g.dist/2600)*.15)*(1-Math.min(.45,g.miss*.1))))}
 function actEx(g){X.fillStyle='#ffe0b2';X.fillRect(0,0,W,H);X.fillStyle='#ffcc80';X.fillRect(0,H*.7,W,H);
  const targetY=H*.55;X.strokeStyle='#ff9800';X.lineWidth=4;X.beginPath();X.arc(W/2,targetY,36,0,7);X.stroke();
  X.fillStyle='#6b4423';X.font='bold 18px sans-serif';X.textAlign='center';X.fillText('원 안에 맞춰 탭!',W/2,H*.2);
