@@ -33,7 +33,7 @@ window.__startAction=function(a){mode='action';openMG(ANAME[a]);
  const base={k:a,score:0,t:0,over:false,done:false,hits:0,miss:0,need:8,px:W/2,tx:W/2,y:0,vy:0,obs:[],items:[],seq:[],player:[],show:true,phase:'show',beat:0,hold:0,cards:[],flipped:[],matched:0,blanket:0,ball:null,cues:[],cueI:0};
  if(a==='feed'){base.need=8;base.px=W/2}
  if(a==='walk'){base.need=6;base.px=W*0.28;base.tx=base.px;base.dist=0;base.jy=0;base.jvy=0;base.coyote=8;base.jumpBuf=0;base.jumped=0}
- if(a==='exercise'){base.need=8;base.cues=[];for(let i=0;i<8;i++)base.cues.push({t:60+i*40+(i>4?10:0),hit:false,missed:false})}
+ if(a==='exercise'){base.need=10;base.cues=[];for(let i=0;i<10;i++)base.cues.push({t:70+i*38,lane:i%4,hit:false,missed:false})}
  if(a==='play'){base.ball={x:W/2,y:H*.35,vy:0};base.need=10;base.bounces=0}
  if(a==='study'){const pairs=['🍉','🍊','🥕','🌿'];const deck=[...pairs,...pairs].sort(()=>Math.random()-.5);base.cards=deck.map((e,i)=>({e,i,open:false,gone:false}));base.need=4;base.flipped=[];base.limit=12*60}
  if(a==='trick'){const n=3+Math.floor(Math.random()*2);base.seq=[];for(let i=0;i<n;i++)base.seq.push(Math.floor(Math.random()*4));base.player=[];base.phase='show';base.showI=-1;base.showT=0;base.round=0;base.need=2}
@@ -41,22 +41,24 @@ window.__startAction=function(a){mode='action';openMG(ANAME[a]);
  G=base;cancelAnimationFrame(raf);loop()};
 const ptr={down:false,x:0,y:0,sx:0,sy:0};
 function onDown(e){if(!G||G.over)return;const t=e.touches?e.touches[0]:e;ptr.down=true;ptr.x=t.clientX;ptr.y=t.clientY;ptr.sx=t.clientX;ptr.sy=t.clientY;ptr.t0=performance.now();
- if(mode==='action'&&G.k==='walk'){if(inJumpBtn(t.clientX,t.clientY)){doWalkJump();ptr.jumpBtn=true}else{G.tx=Math.max(40,Math.min(W-40,t.clientX));ptr.jumpBtn=false}}
+ if(mode==='action'&&G.k==='walk'){if(inJumpBtn(t.clientX,t.clientY)){ptr.jumpBtn=true;doWalkJump(true)}else{G.tx=Math.max(40,Math.min(W-40,t.clientX));ptr.jumpBtn=false}}
  else handleTap(t.clientX,t.clientY);e.preventDefault()}
 function onMove(e){if(!G||G.over||!ptr.down)return;const t=e.touches?e.touches[0]:e;ptr.x=t.clientX;ptr.y=t.clientY;
- if(mode==='action'){if(G.k==='walk'||G.k==='feed')G.tx=Math.max(40,Math.min(W-40,t.clientX));
-  if(G.k==='sleep'){const dy=t.clientY-ptr.sy;if(dy>0)G.blanket=Math.min(1,G.blanket+dy/220);ptr.sy=t.clientY}
-  if(G.k==='play'&&G.ball){/* drag not needed */}}
+ if(mode==='action'){if(G.k==='walk'){if(ptr.jumpBtn){if(!inJumpBtn(t.clientX,t.clientY)){ptr.jumpBtn=false;releaseWalkJump()}}else G.tx=Math.max(40,Math.min(W-40,t.clientX))}
+  else if(G.k==='feed')G.tx=Math.max(40,Math.min(W-40,t.clientX));
+  if(G.k==='sleep'){const dy=t.clientY-ptr.sy;if(dy>0)G.blanket=Math.min(1,G.blanket+dy/220);ptr.sy=t.clientY}}
  e.preventDefault()}
-function onUp(e){if(G&&!G.over&&mode==='action'&&G.k==='walk'&&!ptr.jumpBtn){const dt=performance.now()-(ptr.t0||0);const dx=Math.abs(ptr.x-ptr.sx),dy=Math.abs(ptr.y-ptr.sy);if(dt<220&&dx<18&&dy<18)doWalkJump()}
+function onUp(e){if(G&&!G.over&&mode==='action'&&G.k==='walk'){if(ptr.jumpBtn)releaseWalkJump();
+  else{const dt=performance.now()-(ptr.t0||0);const dx=Math.abs(ptr.x-ptr.sx),dy=Math.abs(ptr.y-ptr.sy);if(dt<200&&dx<18&&dy<18)doWalkJump(false)}}
  ptr.down=false;ptr.jumpBtn=false}
 function inJumpBtn(x,y){const bx=W-78,by=H-110,bw=64,bh=64;return x>=bx&&x<=bx+bw&&y>=by&&y<=by+bh}
-function doWalkJump(){if(!G||G.k!=='walk'||G.over)return;G.jumpBuf=10;tryWalkJump()}
-function tryWalkJump(){if(!G||G.k!=='walk')return;if((G.jy<=0&&G.coyote>0)||G.jy<=0){if(G.jumpBuf>0){G.jvy=13.5;G.jy=Math.max(G.jy,0.1);G.coyote=0;G.jumpBuf=0;G.jumped++}}}
+function doWalkJump(holdable){if(!G||G.k!=='walk'||G.over)return;G.jumpBuf=10;G.jumpHoldable=!!holdable;G.jumpHold=0;tryWalkJump()}
+function tryWalkJump(){if(!G||G.k!=='walk')return;const can=G.jy<=0&&(G.coyote>0||G.jy===0);if(can&&G.jumpBuf>0){G.jvy=G.jumpHoldable?8.0:6.0;G.jy=.1;G.coyote=0;G.jumpBuf=0;G.holdingJump=!!G.jumpHoldable;G.jumped++}}
+function releaseWalkJump(){if(!G||G.k!=='walk')return;G.holdingJump=false;if(G.jvy>2.5)G.jvy*=.48}
 C.addEventListener('pointerdown',onDown);C.addEventListener('pointermove',onMove);C.addEventListener('pointerup',onUp);C.addEventListener('pointercancel',onUp);
 function handleTap(x,y){if(mode==='hub'){if(G.k==='jump'){if(G.y===0)G.vy=13}else G.tx=x<W/2?Math.max(40,G.px-90):Math.min(W-40,G.px+90);return}
  if(G.k==='feed')G.tx=x;
- if(G.k==='exercise'){const cue=G.cues.find(c=>!c.hit&&!c.missed&&Math.abs(G.t-c.t)<18);if(cue){cue.hit=true;G.hits++;G.score+=10}else G.miss++}
+ if(G.k==='exercise'){const lane=exLaneAt(x,y);if(lane<0){G.miss++;return}const cue=G.cues.find(c=>c.lane===lane&&!c.hit&&!c.missed&&Math.abs(G.t-c.t)<20);if(cue){cue.hit=true;G.hits++;G.score+=10;G.flashLane=lane;G.flashT=12}else G.miss++}
  if(G.k==='play'&&G.ball){if(Math.abs(x-G.ball.x)<60&&Math.abs(y-G.ball.y)<80&&G.ball.vy>0){G.ball.vy=-11-Math.random()*2;G.bounces++;G.hits++;G.score+=10}}
  if(G.k==='study'){const cols=4,gap=12,cw=(W-40-gap*3)/4,ch=cw,ox=20,oy=H*.28;const i=Math.floor((x-ox)/(cw+gap)),j=Math.floor((y-oy)/(ch+gap));const idx=j*cols+i;
   if(idx>=0&&idx<G.cards.length&&!G.cards[idx].gone&&!G.cards[idx].open&&G.flipped.length<2){G.cards[idx].open=true;G.flipped.push(idx);
@@ -65,6 +67,7 @@ function handleTap(x,y){if(mode==='hub'){if(G.k==='jump'){if(G.y===0)G.vy=13}els
    if(G.player[G.player.length-1]!==G.seq[G.player.length-1]){G.miss++;G.phase='fail';G.failT=40}
    else if(G.player.length===G.seq.length){G.hits++;G.score+=20;G.round++;if(G.round>=G.need)finishAction(1);else{G.seq.push(Math.floor(Math.random()*4));G.player=[];G.phase='show';G.showI=-1;G.showT=0}}}}}
 function btnAt(x,y){const r=42,cx=[W*.25,W*.75,W*.25,W*.75],cy=[H*.42,H*.42,H*.62,H*.62];for(let i=0;i<4;i++)if(hit(x,y,cx[i],cy[i],r+10))return i;return -1}
+function exLaneAt(x,y){const ty=H*.62,r=42;for(let i=0;i<4;i++){const cx=W*((i+.5)/4);if(hit(x,y,cx,ty,r+16))return i}return -1}
 function finishAction(q){if(G.over)return;G.over=true;G.quality=Math.max(0,Math.min(1,q));
  const res=window.__capy.finishAction(G.k,G.quality);
  $('endT').textContent=`완료! ${Math.round(G.quality*100)}점`;
@@ -104,8 +107,10 @@ function actWalk(g){X.fillStyle='#b3e5fc';X.fillRect(0,0,W,H);X.fillStyle='#81c7
  if(!g.over){
   // auto-run forward; left/right follow target
   g.dist+=4.2;g.score+=.12;g.px+=(g.tx-g.px)*.22;
-  // jump physics + coyote / buffer
-  if(g.jy<=0){g.jy=0;g.jvy=0;g.coyote=Math.min(8,g.coyote+1)}else{g.coyote=0;g.jvy-=.72;g.jy+=g.jvy;if(g.jy<=0){g.jy=0;g.jvy=0;g.coyote=8}}
+  // jump physics: hold jump button = higher; short tap = hop; coyote kept
+  if(g.jy<=0){g.jy=0;g.jvy=0;g.holdingJump=false;g.coyote=Math.min(8,(g.coyote||0)+1)}
+  else{g.coyote=0;if(g.holdingJump&&ptr.jumpBtn&&(g.jumpHold||0)<12&&g.jvy>0){g.jumpHold=(g.jumpHold||0)+1;g.jvy=Math.min(13.2,g.jvy+.55)}
+   const grav=g.holdingJump&&ptr.jumpBtn&&g.jvy>0?.5:.8;g.jvy-=grav;g.jy+=g.jvy;if(g.jy>88){g.jy=88;if(g.jvy>0)g.jvy=0}if(g.jy<=0){g.jy=0;g.jvy=0;g.holdingJump=false;g.coyote=8}}
   if(g.jumpBuf>0){g.jumpBuf--;tryWalkJump()}
   // spawn: rocks need jump, puddles also jumpable; flowers
   if(g.t%48===0)g.obs.push({x:W+30,y:ground-10,type:Math.random()<.55?'rock':'puddle',w:18+Math.random()*14,h:g.t});
@@ -117,8 +122,8 @@ function actWalk(g){X.fillStyle='#b3e5fc';X.fillRect(0,0,W,H);X.fillStyle='#81c7
   if(o.type==='puddle')puddle(o.x,ground-4,o.w);else rock(o.x,ground-14,17);
   const half=o.type==='puddle'?o.w+4:20;
   const near=Math.abs(o.x-g.px)<half;
-  // only hit if not high enough in air (need jump over ~28px)
-  const cleared=g.jy>22;
+  // short hop clears puddles; full(er) jump clears rocks
+  const cleared=g.jy>(o.type==='puddle'?12:28);
   if(!g.over&&near&&!cleared&&!o.hit){o.hit=true;g.miss++;g.score=Math.max(0,g.score-3)}
   return o.x>-50});
  g.items=g.items.filter(it=>{flower(it.x,it.y);
@@ -128,18 +133,27 @@ function actWalk(g){X.fillStyle='#b3e5fc';X.fillRect(0,0,W,H);X.fillStyle='#81c7
  const bob=g.jy>0?0:Math.sin(g.t*.45)*2;
  capy(g.px,bodyY()+bob,1,g.tx<g.px-2?-1:1);
  // jump button
- const bx=W-78,by=H-110;X.fillStyle=g.jy>0?'#ffb74daa':'#ff9800';roundRect(bx,by,64,64,18);X.fillStyle='#fff';X.font='bold 13px sans-serif';X.textAlign='center';X.textBaseline='middle';X.fillText('점프',bx+32,by+32);X.font='20px serif';X.fillText('⬆',bx+32,by+14);
+ const bx=W-78,by=H-110;X.fillStyle=(ptr.jumpBtn||g.jy>0)?'#ffb74d':'#ff9800';roundRect(bx,by,64,72,18);X.fillStyle='#fff';X.font='bold 12px sans-serif';X.textAlign='center';X.textBaseline='middle';X.fillText('길게↑',bx+32,by+48);X.font='bold 14px sans-serif';X.fillText('점프',bx+32,by+30);X.font='18px serif';X.fillText('⬆',bx+32,by+12);
  X.fillStyle='#6b4423';X.font='bold 16px sans-serif';X.textBaseline='alphabetic';
  X.fillText(`꽃 ${g.hits}/${g.need} · 부딪힘 ${g.miss}`,W/2,H*.15);
- if(g.t<140){X.fillText('좌우로 이동 · 점프(버튼/탭)로 돌 넘기!',W/2,H*.25)}
+ if(g.t<160){X.fillText('짧게=살짝 점프 · 점프 길게=높이! 돌은 높이 넘기',W/2,H*.25)}
  if(!g.over&&(g.hits>=g.need||g.dist>2400||g.t>18*60))finishAction(Math.max(.2,Math.min(1,(g.hits/g.need)*.85+(g.dist/2600)*.15)*(1-Math.min(.45,g.miss*.1))))}
-function actEx(g){X.fillStyle='#ffe0b2';X.fillRect(0,0,W,H);X.fillStyle='#ffcc80';X.fillRect(0,H*.7,W,H);
- const targetY=H*.55;X.strokeStyle='#ff9800';X.lineWidth=4;X.beginPath();X.arc(W/2,targetY,36,0,7);X.stroke();
- X.fillStyle='#6b4423';X.font='bold 18px sans-serif';X.textAlign='center';X.fillText('원 안에 맞춰 탭!',W/2,H*.2);
- g.cues.forEach(c=>{const dy=(c.t-g.t)*4;const y=targetY-dy;if(y<-40||y>H)return;X.fillStyle=c.hit?'#66bb6a':c.missed?'#ef5350':'#fff';X.beginPath();X.arc(W/2,y,28,0,7);X.fill();X.strokeStyle='#ff8a00';X.stroke();
-  if(!g.over&&!c.hit&&!c.missed&&g.t>c.t+18){c.missed=true;g.miss++}});
- capy(W/2,H*.78,1.1);const done=g.cues.every(c=>c.hit||c.missed);
- X.fillText(`성공 ${g.hits}/${g.cues.length}`,W/2,H*.28);
+function actEx(g){X.fillStyle='#ffe0b2';X.fillRect(0,0,W,H);X.fillStyle='#ffcc80';X.fillRect(0,H*.72,W,H);
+ const ty=H*.62, cols=['#ef5350','#42a5f5','#66bb6a','#ffa726'], labels=['①','②','③','④'];
+ // 4 target rings
+ for(let i=0;i<4;i++){const cx=W*((i+.5)/4);X.strokeStyle=cols[i];X.lineWidth=5;X.beginPath();X.arc(cx,ty,36,0,7);X.stroke();
+  X.fillStyle=(g.flashLane===i&&g.flashT>0)?'#fff8e1':'#ffffffcc';X.beginPath();X.arc(cx,ty,28,0,7);X.fill();
+  X.fillStyle=cols[i];X.font='bold 18px sans-serif';X.textAlign='center';X.textBaseline='middle';X.fillText(labels[i],cx,ty);
+  // lane guides
+  X.strokeStyle='#0001';X.lineWidth=1;X.beginPath();X.moveTo(cx,80);X.lineTo(cx,ty-40);X.stroke()}
+ if(g.flashT>0)g.flashT--;
+ g.cues.forEach(c=>{const cx=W*((c.lane+.5)/4);const dy=(c.t-g.t)*4.2;const y=ty-dy;if(y<-50||y>H) ; else{
+  X.fillStyle=c.hit?'#66bb6a':c.missed?'#ef535088':cols[c.lane];X.beginPath();X.arc(cx,y,22,0,7);X.fill();X.strokeStyle='#fff';X.lineWidth=2;X.stroke()}
+  if(!g.over&&!c.hit&&!c.missed&&g.t>c.t+20){c.missed=true;g.miss++}});
+ capy(W/2,H*.82,.95);X.fillStyle='#6b4423';X.font='bold 16px sans-serif';X.textAlign='center';X.textBaseline='alphabetic';
+ X.fillText('원 4개! 노트와 같은 원을 타이밍에 탭',W/2,H*.16);
+ X.fillText(`성공 ${g.hits}/${g.cues.length} · 놓침 ${g.miss}`,W/2,H*.22);
+ const done=g.cues.every(c=>c.hit||c.missed);
  if(!g.over&&done)finishAction(g.hits/g.cues.length)}
 function actPlay(g){X.fillStyle='#e1f5fe';X.fillRect(0,0,W,H);X.fillStyle='#c8e6c9';X.fillRect(0,H*.75,W,H);
  const b=g.ball;if(!g.over){b.vy+=.35;b.y+=b.vy;if(b.y>H*.72){b.y=H*.72;b.vy=0;g.miss++;if(g.miss>=3)finishAction(Math.min(1,g.bounces/g.need)*.7)}}
