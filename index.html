@@ -29,6 +29,10 @@ html,body{height:100%;overflow:hidden;background:#fdf3e3}
 #mgTop{position:absolute;top:0;left:0;right:0;padding:calc(env(safe-area-inset-top) + 10px) 12px;display:flex;justify-content:space-between;align-items:center;color:#6b4423;font-weight:800}
 #mgBack{border:0;background:#fff;border-radius:12px;padding:8px 12px;font-weight:800;color:#6b4423;box-shadow:0 2px 6px #0002}
 #mgEnd{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#0005}#mgEnd.on{display:flex}
+#diffM .diff{display:grid;gap:8px;margin:12px 0}
+#diffM .diff button{border:2px solid #ffe0b2;background:#fff;border-radius:14px;padding:12px;font-size:15px;font-weight:800;color:#6b4423;text-align:left}
+#diffM .diff button small{display:block;font-weight:500;color:#a1887f;font-size:12px;margin-top:2px}
+#diffM .diff button.sel{border-color:#ff9800;background:#fff3e0;box-shadow:0 0 0 2px #ffcc80}
 </style></head><body>
 <canvas id="c"></canvas>
 <div id="top"><span id="name">카피바라</span><span id="stage">아기</span><span id="coin">🪙 0</span>
@@ -39,6 +43,15 @@ html,body{height:100%;overflow:hidden;background:#fdf3e3}
 <button data-a="study"><b>📚</b>공부</button><button data-a="trick"><b>🎵</b>재롱</button><button data-a="decor"><b>🏠</b>집꾸미기</button><button data-a="sleep"><b>💤</b>잠자기</button></div>
 <div class="modal" id="nameM"><div class="box"><h2>🦫 아기 카피바라가 태어났어요!</h2><p>이름을 지어 주세요</p><input id="nameI" maxlength="8" placeholder="예: 바라, 유자, 뭉치"><button class="btn" id="nameB">이름 정하기</button></div></div>
 <div class="modal" id="decorM"><div class="box"><h2>🏠 집 꾸미기</h2><p>코인으로 가구를 사서 집을 꾸며요</p><div class="shop" id="shop"></div><button class="btn" id="decorX">닫기</button></div></div>
+<div class="modal" id="diffM"><div class="box"><h2>🏃 운동 난이도</h2><p style="font-size:13px">난이도가 높을수록 빠르고, 보상도 커요</p>
+<div class="diff" id="diffList">
+<button type="button" data-d="easy">🌱 쉬움<small>느린 노트 · 넓은 판정 · 보상 ×0.85</small></button>
+<button type="button" data-d="normal" class="sel">⭐ 보통<small>기본 속도 · 기본 판정 · 보상 ×1.0</small></button>
+<button type="button" data-d="hard">🔥 어려움<small>빠른 노트 · 좁은 판정 · 보상 ×1.25</small></button>
+<button type="button" data-d="veryhard">💀 매우어려움<small>매우 빠름 · 아주 좁은 판정 · 보상 ×1.5</small></button>
+</div>
+<button class="btn" id="diffGo">시작!</button>
+<button class="btn" id="diffX" style="background:#8d6e63;margin-top:8px">취소</button></div></div>
 <script type="module" src="game.js"></script><button id="gameBtn" aria-label="미니게임">🎮<span>미니게임</span></button>
 <div class="modal" id="menuM"><div class="box"><h2>🎮 미니게임</h2><p style="font-size:13px">한 판에 체력 5 · 점수만큼 코인·경험치·행복!</p>
 <button class="gm" data-g="jump">🦘 장애물 뛰어넘기<small>화면을 탭해서 점프! 돌멩이를 넘어요 · 최고 <b id="b_jump">0</b></small></button>

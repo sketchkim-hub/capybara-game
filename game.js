@@ -69,9 +69,9 @@ function act(a){if(a==='decor'){openShop();return}
  if(a!=='feed'&&a!=='sleep'&&S.hunger<10){toast('배고파요! 먹이를 주세요 🍉');return}
  if(window.__startAction){window.__startAction(a);return}
  finishAction(a,1)}
-function finishAction(a,quality){quality=Math.max(0,Math.min(1,quality));const A=ACT[a],mul=.4+.6*quality;
+function finishAction(a,quality,rewardMul=1){quality=Math.max(0,Math.min(1,quality));rewardMul=rewardMul||1;const A=ACT[a],mul=.4+.6*quality;
  for(const k in A.d){let v=A.d[k];if(v>0)v=Math.round(v*mul);S[k]=cl(S[k]+v)}
- const before=stage();const xp=Math.max(1,Math.round(A.x*mul)),coin=Math.round(A.c*mul);S.exp+=xp;S.coin+=coin;
+ const before=stage();const xp=Math.max(1,Math.round(A.x*mul*rewardMul)),coin=Math.round(A.c*mul*rewardMul);S.exp+=xp;S.coin+=coin;
  let msg=A.m;if(a==='trick'){const lv=Math.min(TRICKS.length,1+Math.floor(S.smart/25));msg=`재롱: ${TRICKS[Math.floor(Math.random()*lv)]}! 🎵`}
  anim=a;at=0;park.visible=a==='walk';wall.visible=a!=='walk';spawn(A.fx);toast(msg+(quality<.5?' (아쉬워요)':quality>.85?' (완벽!)':''));
  if(stage()!==before)setTimeout(()=>{toast(`🎉 ${S.name}(이)가 ${stage().n} 카피바라로 성장했어요!`);spawn(0xffeb3b,20)},1800);

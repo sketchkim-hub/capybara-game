@@ -2,6 +2,14 @@ const $=id=>document.getElementById(id);
 const C=$('mgc'),X=C.getContext('2d');let W,H,dpr;
 const NAMES={jump:'장애물 뛰어넘기',dodge:'장애물 피하기',catch:'유자 받기'};
 const ANAME={feed:'🍉 먹이 주기',walk:'🌳 산책하기',exercise:'🏃 운동하기',play:'🧶 공놀이',study:'📚 공부하기',trick:'🎵 재롱 연습',sleep:'💤 재우기'};
+const DIFF={
+ easy:{id:'easy',n:'쉬움',speed:3.0,gap:52,win:28,notes:8,reward:0.85,label:'🌱 쉬움'},
+ normal:{id:'normal',n:'보통',speed:4.2,gap:38,win:20,notes:10,reward:1.0,label:'⭐ 보통'},
+ hard:{id:'hard',n:'어려움',speed:5.6,gap:28,win:14,notes:12,reward:1.25,label:'🔥 어려움'},
+ veryhard:{id:'veryhard',n:'매우어려움',speed:7.2,gap:20,win:10,notes:14,reward:1.5,label:'💀 매우어려움'}
+};
+let pickedDiff='normal';
+
 const best=()=>JSON.parse(localStorage.getItem('capy_best_v1')||'{}');
 function refreshBest(){const b=best();for(const k in NAMES)$('b_'+k).textContent=b[k]||0}
 $('gameBtn').onclick=()=>{refreshBest();$('menuM').classList.add('on')};
@@ -29,16 +37,24 @@ function openMG(title){$('menuM').classList.remove('on');$('mg').classList.add('
 function startHub(k){const s=window.__capy.S;if(s.energy<5){window.__capy.toast('체력이 부족해요… 잠을 재워 주세요 💤');return}
  s.energy-=5;window.__capy.ui();mode='hub';openMG(NAMES[k]);
  G={k,score:0,t:0,over:false,px:W/2,tx:W/2,y:0,vy:0,obs:[],items:[],miss:0};cancelAnimationFrame(raf);loop()}
-window.__startAction=function(a){mode='action';openMG(ANAME[a]);
- const base={k:a,score:0,t:0,over:false,done:false,hits:0,miss:0,need:8,px:W/2,tx:W/2,y:0,vy:0,obs:[],items:[],seq:[],player:[],show:true,phase:'show',beat:0,hold:0,cards:[],flipped:[],matched:0,blanket:0,ball:null,cues:[],cueI:0};
+function beginAction(a,diffId){mode='action';openMG(ANAME[a]+(a==='exercise'&&diffId?' · '+DIFF[diffId].n:''));
+ const base={k:a,score:0,t:0,over:false,done:false,hits:0,miss:0,need:8,px:W/2,tx:W/2,y:0,vy:0,obs:[],items:[],seq:[],player:[],show:true,phase:'show',beat:0,hold:0,cards:[],flipped:[],matched:0,blanket:0,ball:null,cues:[],cueI:0,diff:diffId||null,rewardMul:1,speed:4.2,win:20};
  if(a==='feed'){base.need=8;base.px=W/2}
  if(a==='walk'){base.need=6;base.px=W*0.28;base.tx=base.px;base.dist=0;base.jy=0;base.jvy=0;base.coyote=8;base.jumpBuf=0;base.jumped=0}
- if(a==='exercise'){base.need=10;base.cues=[];for(let i=0;i<10;i++)base.cues.push({t:70+i*38,lane:i%4,hit:false,missed:false})}
+ if(a==='exercise'){const D=DIFF[diffId||'normal'];base.rewardMul=D.reward;base.speed=D.speed;base.win=D.win;base.need=D.notes;base.cues=[];
+  let t=55;for(let i=0;i<D.notes;i++){base.cues.push({t:t,lane:Math.floor(Math.random()*4),hit:false,missed:false});t+=D.gap+(i%3===0?4:0)}}
  if(a==='play'){base.ball={x:W/2,y:H*.35,vy:0};base.need=10;base.bounces=0}
  if(a==='study'){const pairs=['🍉','🍊','🥕','🌿'];const deck=[...pairs,...pairs].sort(()=>Math.random()-.5);base.cards=deck.map((e,i)=>({e,i,open:false,gone:false}));base.need=4;base.flipped=[];base.limit=12*60}
  if(a==='trick'){const n=3+Math.floor(Math.random()*2);base.seq=[];for(let i=0;i<n;i++)base.seq.push(Math.floor(Math.random()*4));base.player=[];base.phase='show';base.showI=-1;base.showT=0;base.round=0;base.need=2}
  if(a==='sleep'){base.blanket=.12;base.need=1}
- G=base;cancelAnimationFrame(raf);loop()};
+ G=base;cancelAnimationFrame(raf);loop()}
+window.__startAction=function(a){if(a==='exercise'){pickedDiff='normal';
+  document.querySelectorAll('#diffList button').forEach(b=>b.classList.toggle('sel',b.dataset.d==='normal'));
+  $('diffM').classList.add('on');return}
+ beginAction(a)};
+$('diffGo').onclick=()=>{$('diffM').classList.remove('on');beginAction('exercise',pickedDiff)};
+$('diffX').onclick=()=>$('diffM').classList.remove('on');
+document.querySelectorAll('#diffList button').forEach(b=>b.onclick=()=>{pickedDiff=b.dataset.d;document.querySelectorAll('#diffList button').forEach(x=>x.classList.toggle('sel',x===b))});
 const ptr={down:false,x:0,y:0,sx:0,sy:0};
 function onDown(e){if(!G||G.over)return;const t=e.touches?e.touches[0]:e;ptr.down=true;ptr.x=t.clientX;ptr.y=t.clientY;ptr.sx=t.clientX;ptr.sy=t.clientY;ptr.t0=performance.now();
  if(mode==='action'&&G.k==='walk'){if(inJumpBtn(t.clientX,t.clientY)){ptr.jumpBtn=true;doWalkJump(true)}else{G.tx=Math.max(40,Math.min(W-40,t.clientX));ptr.jumpBtn=false}}
@@ -58,7 +74,7 @@ function releaseWalkJump(){if(!G||G.k!=='walk')return;G.holdingJump=false;if(G.j
 C.addEventListener('pointerdown',onDown);C.addEventListener('pointermove',onMove);C.addEventListener('pointerup',onUp);C.addEventListener('pointercancel',onUp);
 function handleTap(x,y){if(mode==='hub'){if(G.k==='jump'){if(G.y===0)G.vy=13}else G.tx=x<W/2?Math.max(40,G.px-90):Math.min(W-40,G.px+90);return}
  if(G.k==='feed')G.tx=x;
- if(G.k==='exercise'){const lane=exLaneAt(x,y);if(lane<0){G.miss++;return}const cue=G.cues.find(c=>c.lane===lane&&!c.hit&&!c.missed&&Math.abs(G.t-c.t)<20);if(cue){cue.hit=true;G.hits++;G.score+=10;G.flashLane=lane;G.flashT=12}else G.miss++}
+ if(G.k==='exercise'){const lane=exLaneAt(x,y);if(lane<0){G.miss++;return}const cue=G.cues.find(c=>c.lane===lane&&!c.hit&&!c.missed&&Math.abs(G.t-c.t)<(G.win||20));if(cue){cue.hit=true;G.hits++;G.score+=10;G.flashLane=lane;G.flashT=12}else G.miss++}
  if(G.k==='play'&&G.ball){if(Math.abs(x-G.ball.x)<60&&Math.abs(y-G.ball.y)<80&&G.ball.vy>0){G.ball.vy=-11-Math.random()*2;G.bounces++;G.hits++;G.score+=10}}
  if(G.k==='study'){const cols=4,gap=12,cw=(W-40-gap*3)/4,ch=cw,ox=20,oy=H*.28;const i=Math.floor((x-ox)/(cw+gap)),j=Math.floor((y-oy)/(ch+gap));const idx=j*cols+i;
   if(idx>=0&&idx<G.cards.length&&!G.cards[idx].gone&&!G.cards[idx].open&&G.flipped.length<2){G.cards[idx].open=true;G.flipped.push(idx);
@@ -69,9 +85,9 @@ function handleTap(x,y){if(mode==='hub'){if(G.k==='jump'){if(G.y===0)G.vy=13}els
 function btnAt(x,y){const r=42,cx=[W*.25,W*.75,W*.25,W*.75],cy=[H*.42,H*.42,H*.62,H*.62];for(let i=0;i<4;i++)if(hit(x,y,cx[i],cy[i],r+10))return i;return -1}
 function exLaneAt(x,y){const ty=H*.62,r=42;for(let i=0;i<4;i++){const cx=W*((i+.5)/4);if(hit(x,y,cx,ty,r+16))return i}return -1}
 function finishAction(q){if(G.over)return;G.over=true;G.quality=Math.max(0,Math.min(1,q));
- const res=window.__capy.finishAction(G.k,G.quality);
+ const res=window.__capy.finishAction(G.k,G.quality,G.rewardMul||1);
  $('endT').textContent=`완료! ${Math.round(G.quality*100)}점`;
- $('endP').innerHTML=`${res.msg}<br>🪙 +${res.coin} · ⭐ 경험치 +${res.xp}<br>성과에 따라 보상이 달라져요`;
+ $('endP').innerHTML=`${res.msg}<br>🪙 +${res.coin} · ⭐ 경험치 +${res.xp}<br>${G.diff?('난이도 '+DIFF[G.diff].n+' · 보상 ×'+DIFF[G.diff].reward+'<br>'):''}성과에 따라 보상이 달라져요`;
  $('again').style.display='none';$('mgEnd').classList.add('on')}
 function endHub(){G.over=true;const s=window.__capy.S,b=best(),sc=Math.floor(G.score);let nb='';
  if(sc>(b[G.k]||0)){b[G.k]=sc;localStorage.setItem('capy_best_v1',JSON.stringify(b));nb='🏆 최고 기록 갱신! '}
@@ -147,12 +163,15 @@ function actEx(g){X.fillStyle='#ffe0b2';X.fillRect(0,0,W,H);X.fillStyle='#ffcc80
   // lane guides
   X.strokeStyle='#0001';X.lineWidth=1;X.beginPath();X.moveTo(cx,80);X.lineTo(cx,ty-40);X.stroke()}
  if(g.flashT>0)g.flashT--;
- g.cues.forEach(c=>{const cx=W*((c.lane+.5)/4);const dy=(c.t-g.t)*4.2;const y=ty-dy;if(y<-50||y>H) ; else{
+ const sp=g.speed||4.2,win=g.win||20;
+ g.cues.forEach(c=>{const cx=W*((c.lane+.5)/4);const dy=(c.t-g.t)*sp;const y=ty-dy;if(y<-50||y>H) ; else{
   X.fillStyle=c.hit?'#66bb6a':c.missed?'#ef535088':cols[c.lane];X.beginPath();X.arc(cx,y,22,0,7);X.fill();X.strokeStyle='#fff';X.lineWidth=2;X.stroke()}
-  if(!g.over&&!c.hit&&!c.missed&&g.t>c.t+20){c.missed=true;g.miss++}});
+  if(!g.over&&!c.hit&&!c.missed&&g.t>c.t+win){c.missed=true;g.miss++}});
  capy(W/2,H*.82,.95);X.fillStyle='#6b4423';X.font='bold 16px sans-serif';X.textAlign='center';X.textBaseline='alphabetic';
- X.fillText('원 4개! 노트와 같은 원을 타이밍에 탭',W/2,H*.16);
- X.fillText(`성공 ${g.hits}/${g.cues.length} · 놓침 ${g.miss}`,W/2,H*.22);
+ const dn=g.diff&&DIFF[g.diff]?DIFF[g.diff].n:'보통';
+ X.fillText(`원 4개 · 난이도 ${dn}`,W/2,H*.15);
+ X.fillText(`성공 ${g.hits}/${g.cues.length} · 놓침 ${g.miss}`,W/2,H*.21);
+ if(g.t<100)X.fillText('노트와 같은 색 원을 타이밍에 탭!',W/2,H*.27);
  const done=g.cues.every(c=>c.hit||c.missed);
  if(!g.over&&done)finishAction(g.hits/g.cues.length)}
 function actPlay(g){X.fillStyle='#e1f5fe';X.fillRect(0,0,W,H);X.fillStyle='#c8e6c9';X.fillRect(0,H*.75,W,H);
