@@ -65,11 +65,10 @@ const ACT={
  sleep:{need:0,d:{energy:50,hunger:-10,clean:5},x:3,c:0,m:'쿨쿨… 체력 회복 💤',fx:0x9575cd}};
 const TRICKS=['빙글빙글 돌기','점프 재롱','고개 갸웃','유자 올리기'];
 function act(a){if(a==='decor'){openShop();return}
- const A=ACT[a];
- // 운동은 난이도 창을 먼저 띄우고, 시작 버튼에서 체력/배고픔을 검사
- if(a!=='exercise'){if(S.energy<A.need){toast('너무 피곤해요… 잠을 재워 주세요 💤');return}
-  if(a!=='feed'&&a!=='sleep'&&S.hunger<10){toast('배고파요! 먹이를 주세요 🍉');return}}
+ // 돌보기 미니게임은 난이도 창 먼저, 시작! 에서 체력/배고픔 검사
  if(window.__startAction){window.__startAction(a);return}
+ const A=ACT[a];if(S.energy<A.need){toast('너무 피곤해요… 잠을 재워 주세요 💤');return}
+ if(a!=='feed'&&a!=='sleep'&&S.hunger<10){toast('배고파요! 먹이를 주세요 🍉');return}
  finishAction(a,1)}
 function finishAction(a,quality,rewardMul=1){quality=Math.max(0,Math.min(1,quality));rewardMul=rewardMul||1;const A=ACT[a],mul=.4+.6*quality;
  for(const k in A.d){let v=A.d[k];if(v>0)v=Math.round(v*mul);S[k]=cl(S[k]+v)}
